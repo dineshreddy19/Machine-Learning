@@ -1,0 +1,64 @@
+---
+title: "Predicting House Prices"
+author: "Dinesh Reddy"
+date: "8 February 2017"
+output: html_document
+---
+
+## Multiple Linear Regression: Predicting House Prices
+
+## Importing Data set
+
+```{r}
+Housepricesinput <- read.csv("Housepricesinput.csv", header = FALSE)
+Housepricesinput
+```
+
+## Reading Training Data
+
+```{r}
+a<-Housepricesinput$V2[1]
+a
+a1<-a+1
+a1
+Train_data<-Housepricesinput[2:a1,]
+Train_data
+```
+
+## Building a Linear Model
+
+```{r}
+lmMod<-lm(V3~.,data=Train_data)
+lmMod
+```
+
+## Reading Test Data
+
+```{r}
+b<-Housepricesinput$V1[a+2]
+b
+c<-a+b+2
+c
+d<-a+3
+d
+Test_data<-Housepricesinput[d:c,]
+Test_data
+```
+
+## Predicting Output values for Test data 
+
+```{r}
+predct<-predict(lmMod,Test_data)
+cat(predct, sep="\n")
+```
+
+
+
+
+
+
+
+
+
+
+
