@@ -1,0 +1,130 @@
+---
+title: "Breast Cancer Analysis"
+author: "Dinesh Reddy"
+date: "27 March 2017"
+output: html_document
+---
+
+```{r}
+library(mlbench)
+library(caret)
+library(mice)
+library(VIM)
+library(rpart)
+library(randomForest)
+library(e1071)
+library(class)
+```
+
+## Load Breastcancer.rda file
+```{r}
+load("C:/Users/Admin/Documents/R/win-library/3.3/mlbench/data/BreastCancer.rda")
+head(BreastCancer)
+```
+
+## Imputing Missing Values
+```{r}
+md.pattern(BreastCancer)
+aggr_plot <- aggr(BreastCancer, col=c('blue','red'), numbers=TRUE, sortVars=TRUE, labels=names(BreastCancer), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+imputingdata<-mice(BreastCancer,m=5,maxit = 10,method ="cart",seed=100)
+BreastCancer<-complete(imputingdata,2)
+```
+
+## visual representation of imputed data
+```{r}
+aggr_plot <- aggr(BreastCancer, col=c('blue','red'), numbers=TRUE, sortVars=TRUE, labels=names(BreastCancer), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+```
+
+## Removing 1st column
+```{r}
+BreastCancer<-BreastCancer[,-1]
+```
+
+## Splitting Data
+```{r}
+set.seed(100)
+trainIndex<-createDataPartition(BreastCancer$Class,p=0.8,list=FALSE,times=1)
+BreastCancerTrainData<-BreastCancer[trainIndex,]
+BreastCancerTestData<-BreastCancer[-trainIndex,]
+```
+
+## Logistic Regression Model
+```{r}
+logistic<-glm(Class~.,data=BreastCancerTrainData,family="binomial")
+Prdct<-predict(logistic,BreastCancerTestData,type="response")
+confusion=table(round(Prdct),BreastCancerTestData$Class)
+confusion
+logistic_acc<-sum(diag(confusion))/sum(confusion)
+logistic_acc
+```
+## Accuracy for logistic Model is 92%
+
+## RPART Model
+```{r}
+fit<-rpart(Class~.,method = "class",data =BreastCancerTrainData)
+Prdct<-predict(fit,BreastCancerTestData,type="class")
+confusion=table(Prdct,BreastCancerTestData$Class)
+confusion
+rpart_acc<-sum(diag(confusion))/sum(confusion)
+rpart_acc
+```
+## Accuracy for rpart model is 91.3%
+
+## CTREE Model
+
+```{r,fig.width=20,fig.height=10}
+library(party)
+fit<-ctree(Class~.,data=BreastCancerTrainData,controls = ctree_control(maxdepth = 5))
+plot(fit)
+Prdct<-predict(fit,BreastCancerTestData,type="response")
+confusion=table(Prdct,BreastCancerTestData$Class)
+confusion
+ctree_acc<-sum(diag(confusion))/sum(confusion)
+ctree_acc
+```
+## Accuracy for CTREE is 93.5%
+
+## Naive Bayes model
+```{r}
+NaiveB<- naiveBayes(Class ~.,data = BreastCancerTrainData)
+NaiveB
+pred<-predict(NaiveB,BreastCancerTestData)
+tab<-table(pred,BreastCancerTestData$Class)
+Naive_acc<-sum(diag(tab))/sum(tab)
+Naive_acc
+```
+## Accuracy for Naive Bayes is 96.4%
+
+## RANDOM FOREST
+```{r}
+rfmodel<-randomForest(Class~.,data = BreastCancerTrainData,method= "class")
+predicted_data<-predict(rfmodel,BreastCancerTestData)
+rf<-table(predicted_data,BreastCancerTestData$Class)
+rf
+rf_acc<-sum(diag(rf))/sum(rf)
+rf_acc
+```
+
+## Accuracy for Random Forest is 94.2%
+
+## KNN Model
+```{r}
+library(gmodels)
+BreastCancerknn <- knn(train = BreastCancerTrainData[,-10], test = BreastCancerTestData[,-10],cl = BreastCancerTrainData[,10], k=4)
+CrossTable(BreastCancerTestData[,10],BreastCancerknn,prop.chisq = F)
+```
+## knn accuracy
+```{r}
+knn_acc<- (88+44)/139
+knn_acc
+```
+## Accuracy for Knn model is 94.9%
+
+
+## Comparing the accuracy of all models
+
+```{r}
+Compare_Acc<- data.frame("Random Forest" = rf_acc,"Logistic" =logistic_acc,"Naive_Bayes" =Naive_acc,"rpart" =rpart_acc,"knn"= knn_acc,"Ctree" =ctree_acc)
+Compare_Acc
+```
+
